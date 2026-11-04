@@ -39,6 +39,19 @@ python run_pipeline.py
 
 Scripts are numbered and can also be run individually, for example `python scripts/07_weekday_analysis.py`. They depend on outputs from earlier scripts; running the full pipeline in order generates files in `artifacts/`. `results/` contains the checked-in aggregate results and chart from the original run. For an existing download elsewhere, set `FRESH_RETAIL_TRAIN` to the path to `train.parquet`; `eval.parquet` must be in the same directory.
 
+## Reusable forecasting module
+
+After generating the sample, run the configurable validation experiment:
+
+```bash
+python -m forecasting.run --input artifacts/02_sample.csv --output artifacts/experiment --window 7
+python -m unittest discover -s tests -v
+```
+
+The module separates input validation, fitting, prediction and evaluation. It checks required fields, duplicate keys, missing dates and chronological split order. It writes predictions and metrics as separate artifacts. The tests exercise leakage boundaries, daily continuity and metric edge cases using small synthetic data; GitHub Actions runs them on each push and pull request without downloading the original dataset. The reusable CLI evaluates the internal validation period; the separate `scripts/10_final_test.py` implements the fixed held-out test described above.
+
+Repository layout: `scripts/` contains the learning-oriented end-to-end analysis, `forecasting/` the reusable module, `tests/` the automated checks, and `results/` the published aggregate results. This is an offline analytics pipeline rather than a deployed forecasting service.
+
 ## Interpretation and limitations
 
 Sales are globally normalized observed sales, not physical units or true unconstrained demand. Stockouts may censor demand. Differences between stockout groups are descriptive, not causal. The sample is one store and 20 high-selling products, and the final test covers only seven days. Validation was used for model selection; the test has now been inspected and must not be reused to tune models. Next steps include rolling time validation, broader store/product coverage and inventory optimization only when unit, cost and lead-time information is available.
