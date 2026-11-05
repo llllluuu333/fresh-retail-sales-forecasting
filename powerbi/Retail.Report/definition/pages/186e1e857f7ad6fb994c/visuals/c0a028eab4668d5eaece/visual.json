@@ -1,0 +1,60 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "c0a028eab4668d5eaece",
+  "position": {
+    "x": 965,
+    "y": 10,
+    "width": 305,
+    "height": 105,
+    "z": 0,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "slicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimStockout"
+                    }
+                  },
+                  "Property": "stockout_label"
+                }
+              },
+              "queryRef": "DimStockout.stockout_label",
+              "nativeQueryRef": "stockout_label"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Daytime stockout status'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

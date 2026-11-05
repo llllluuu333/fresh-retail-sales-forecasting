@@ -1,0 +1,130 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "81ab6490e8d935add9d5",
+  "position": {
+    "x": 20,
+    "y": 400,
+    "width": 1240,
+    "height": 290,
+    "z": 0,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimProduct"
+                    }
+                  },
+                  "Property": "product_label"
+                }
+              },
+              "queryRef": "DimProduct.product_label",
+              "nativeQueryRef": "product_label"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "Observed Sales"
+                }
+              },
+              "queryRef": "FactForecast.Observed Sales",
+              "nativeQueryRef": "Observed Sales"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "Stockout Share"
+                }
+              },
+              "queryRef": "FactForecast.Stockout Share",
+              "nativeQueryRef": "Stockout Share"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "Baseline WAPE"
+                }
+              },
+              "queryRef": "FactForecast.Baseline WAPE",
+              "nativeQueryRef": "Baseline WAPE"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "Adjusted WAPE"
+                }
+              },
+              "queryRef": "FactForecast.Adjusted WAPE",
+              "nativeQueryRef": "Adjusted WAPE"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "WAPE Improvement pp"
+                }
+              },
+              "queryRef": "FactForecast.WAPE Improvement pp",
+              "nativeQueryRef": "WAPE Improvement pp"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Product-level evaluation and stockout profile'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

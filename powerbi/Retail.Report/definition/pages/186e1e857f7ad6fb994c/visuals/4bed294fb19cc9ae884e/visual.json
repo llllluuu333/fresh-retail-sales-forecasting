@@ -1,0 +1,106 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "4bed294fb19cc9ae884e",
+  "position": {
+    "x": 650,
+    "y": 240,
+    "width": 610,
+    "height": 450,
+    "z": 0,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimDate"
+                    }
+                  },
+                  "Property": "dt"
+                }
+              },
+              "queryRef": "DimDate.dt",
+              "nativeQueryRef": "dt"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "Evaluation Actual Sales"
+                }
+              },
+              "queryRef": "FactForecast.Evaluation Actual Sales",
+              "nativeQueryRef": "Evaluation Actual Sales"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "Baseline Forecast"
+                }
+              },
+              "queryRef": "FactForecast.Baseline Forecast",
+              "nativeQueryRef": "Baseline Forecast"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "FactForecast"
+                    }
+                  },
+                  "Property": "Adjusted Forecast"
+                }
+              },
+              "queryRef": "FactForecast.Adjusted Forecast",
+              "nativeQueryRef": "Adjusted Forecast"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Evaluation only — daily updated one-day forecasts'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,494 @@
+{
+  "name": "RetailAnalytics",
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "en-US",
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "expressions": [],
+    "tables": [
+      {
+        "name": "FactSales",
+        "columns": [
+          {
+            "name": "series_key",
+            "dataType": "string",
+            "sourceColumn": "series_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dt",
+            "dataType": "dateTime",
+            "sourceColumn": "dt",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd"
+          },
+          {
+            "name": "split",
+            "dataType": "string",
+            "sourceColumn": "split",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "stockout_key",
+            "dataType": "int64",
+            "sourceColumn": "stockout_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "sale_amount",
+            "dataType": "double",
+            "sourceColumn": "sale_amount",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "stock_hour6_22_cnt",
+            "dataType": "double",
+            "sourceColumn": "stock_hour6_22_cnt",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "records",
+            "dataType": "int64",
+            "sourceColumn": "records",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "stockout_records",
+            "dataType": "int64",
+            "sourceColumn": "stockout_records",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactSales",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                " Source = Csv.Document(File.Contents(\"CHANGE_ME/FactSales.csv\"), [Delimiter=\",\", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                " Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
+                " Typed = Table.TransformColumnTypes(Headers, {{\"series_key\", type text}, {\"dt\", type date}, {\"split\", type text}, {\"stockout_key\", Int64.Type}, {\"sale_amount\", type number}, {\"stock_hour6_22_cnt\", type number}, {\"records\", Int64.Type}, {\"stockout_records\", Int64.Type}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "FactForecast",
+        "columns": [
+          {
+            "name": "series_key",
+            "dataType": "string",
+            "sourceColumn": "series_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "dt",
+            "dataType": "dateTime",
+            "sourceColumn": "dt",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd"
+          },
+          {
+            "name": "split",
+            "dataType": "string",
+            "sourceColumn": "split",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "stockout_key",
+            "dataType": "int64",
+            "sourceColumn": "stockout_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "model_key",
+            "dataType": "string",
+            "sourceColumn": "model_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "sale_amount",
+            "dataType": "double",
+            "sourceColumn": "sale_amount",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "prediction",
+            "dataType": "double",
+            "sourceColumn": "prediction",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "error",
+            "dataType": "double",
+            "sourceColumn": "error",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "abs_error",
+            "dataType": "double",
+            "sourceColumn": "abs_error",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "FactForecast",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                " Source = Csv.Document(File.Contents(\"CHANGE_ME/FactForecast.csv\"), [Delimiter=\",\", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                " Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
+                " Typed = Table.TransformColumnTypes(Headers, {{\"series_key\", type text}, {\"dt\", type date}, {\"split\", type text}, {\"stockout_key\", Int64.Type}, {\"model_key\", type text}, {\"sale_amount\", type number}, {\"prediction\", type number}, {\"error\", type number}, {\"abs_error\", type number}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Observed Sales",
+            "expression": "SUM(FactSales[sale_amount])",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Observed Records",
+            "expression": "SUM(FactSales[records])",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Stockout Share",
+            "expression": "DIVIDE(SUM(FactSales[stockout_records]), SUM(FactSales[records]))",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Model WAPE",
+            "expression": "IF(HASONEVALUE(DimModel[model_key]), DIVIDE(SUM(FactForecast[abs_error]), SUM(FactForecast[sale_amount])))",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Model Bias",
+            "expression": "IF(HASONEVALUE(DimModel[model_key]), DIVIDE(SUM(FactForecast[error]), SUM(FactForecast[sale_amount])))",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Adjusted WAPE",
+            "expression": "CALCULATE([Model WAPE], DimModel[model_key] = \"mean_7_weekday\")",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Baseline WAPE",
+            "expression": "CALCULATE([Model WAPE], DimModel[model_key] = \"mean_7\")",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "WAPE Improvement pp",
+            "expression": "([Baseline WAPE] - [Adjusted WAPE]) * 100",
+            "formatString": "0.00"
+          },
+          {
+            "name": "Evaluation Actual Sales",
+            "expression": "CALCULATE(SUM(FactForecast[sale_amount]), DimModel[model_key] = \"mean_7\")",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Baseline Forecast",
+            "expression": "CALCULATE(SUM(FactForecast[prediction]), DimModel[model_key] = \"mean_7\")",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Adjusted Forecast",
+            "expression": "CALCULATE(SUM(FactForecast[prediction]), DimModel[model_key] = \"mean_7_weekday\")",
+            "formatString": "#,0.00"
+          }
+        ]
+      },
+      {
+        "name": "DimDate",
+        "columns": [
+          {
+            "name": "dt",
+            "dataType": "dateTime",
+            "sourceColumn": "dt",
+            "summarizeBy": "none",
+            "formatString": "yyyy-MM-dd"
+          },
+          {
+            "name": "weekday",
+            "dataType": "int64",
+            "sourceColumn": "weekday",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "weekday_name",
+            "dataType": "string",
+            "sourceColumn": "weekday_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month",
+            "dataType": "string",
+            "sourceColumn": "month",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimDate",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                " Source = Csv.Document(File.Contents(\"CHANGE_ME/DimDate.csv\"), [Delimiter=\",\", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                " Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
+                " Typed = Table.TransformColumnTypes(Headers, {{\"dt\", type date}, {\"weekday\", Int64.Type}, {\"weekday_name\", type text}, {\"month\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimProduct",
+        "columns": [
+          {
+            "name": "series_key",
+            "dataType": "string",
+            "sourceColumn": "series_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "store_id",
+            "dataType": "int64",
+            "sourceColumn": "store_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "product_id",
+            "dataType": "int64",
+            "sourceColumn": "product_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "product_label",
+            "dataType": "string",
+            "sourceColumn": "product_label",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimProduct",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                " Source = Csv.Document(File.Contents(\"CHANGE_ME/DimProduct.csv\"), [Delimiter=\",\", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                " Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
+                " Typed = Table.TransformColumnTypes(Headers, {{\"series_key\", type text}, {\"store_id\", Int64.Type}, {\"product_id\", Int64.Type}, {\"product_label\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimModel",
+        "columns": [
+          {
+            "name": "model_key",
+            "dataType": "string",
+            "sourceColumn": "model_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "model_name",
+            "dataType": "string",
+            "sourceColumn": "model_name",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimModel",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                " Source = Csv.Document(File.Contents(\"CHANGE_ME/DimModel.csv\"), [Delimiter=\",\", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                " Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
+                " Typed = Table.TransformColumnTypes(Headers, {{\"model_key\", type text}, {\"model_name\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimSplit",
+        "columns": [
+          {
+            "name": "split",
+            "dataType": "string",
+            "sourceColumn": "split",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimSplit",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                " Source = Csv.Document(File.Contents(\"CHANGE_ME/DimSplit.csv\"), [Delimiter=\",\", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                " Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
+                " Typed = Table.TransformColumnTypes(Headers, {{\"split\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimStockout",
+        "columns": [
+          {
+            "name": "stockout_key",
+            "dataType": "int64",
+            "sourceColumn": "stockout_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "stockout_label",
+            "dataType": "string",
+            "sourceColumn": "stockout_label",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DimStockout",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                " Source = Csv.Document(File.Contents(\"CHANGE_ME/DimStockout.csv\"), [Delimiter=\",\", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),",
+                " Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
+                " Typed = Table.TransformColumnTypes(Headers, {{\"stockout_key\", Int64.Type}, {\"stockout_label\", type text}}, \"en-US\")",
+                "in Typed"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "FactSales_DimDate",
+        "fromTable": "FactSales",
+        "fromColumn": "dt",
+        "toTable": "DimDate",
+        "toColumn": "dt",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "FactSales_DimProduct",
+        "fromTable": "FactSales",
+        "fromColumn": "series_key",
+        "toTable": "DimProduct",
+        "toColumn": "series_key",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "FactSales_DimSplit",
+        "fromTable": "FactSales",
+        "fromColumn": "split",
+        "toTable": "DimSplit",
+        "toColumn": "split",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "FactSales_DimStockout",
+        "fromTable": "FactSales",
+        "fromColumn": "stockout_key",
+        "toTable": "DimStockout",
+        "toColumn": "stockout_key",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "FactForecast_DimDate",
+        "fromTable": "FactForecast",
+        "fromColumn": "dt",
+        "toTable": "DimDate",
+        "toColumn": "dt",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "FactForecast_DimProduct",
+        "fromTable": "FactForecast",
+        "fromColumn": "series_key",
+        "toTable": "DimProduct",
+        "toColumn": "series_key",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "FactForecast_DimSplit",
+        "fromTable": "FactForecast",
+        "fromColumn": "split",
+        "toTable": "DimSplit",
+        "toColumn": "split",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "FactForecast_DimStockout",
+        "fromTable": "FactForecast",
+        "fromColumn": "stockout_key",
+        "toTable": "DimStockout",
+        "toColumn": "stockout_key",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "Forecast_Model",
+        "fromTable": "FactForecast",
+        "fromColumn": "model_key",
+        "toTable": "DimModel",
+        "toColumn": "model_key",
+        "fromCardinality": "many",
+        "toCardinality": "one",
+        "crossFilteringBehavior": "oneDirection"
+      }
+    ]
+  }
+}

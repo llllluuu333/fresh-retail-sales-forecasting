@@ -1,0 +1,32 @@
+Observed Sales =
+SUM(FactSales[sale_amount])
+
+Observed Records =
+SUM(FactSales[records])
+
+Stockout Share =
+DIVIDE(SUM(FactSales[stockout_records]), SUM(FactSales[records]))
+
+Model WAPE =
+IF(HASONEVALUE(DimModel[model_key]), DIVIDE(SUM(FactForecast[abs_error]), SUM(FactForecast[sale_amount])))
+
+Model Bias =
+IF(HASONEVALUE(DimModel[model_key]), DIVIDE(SUM(FactForecast[error]), SUM(FactForecast[sale_amount])))
+
+Adjusted WAPE =
+CALCULATE([Model WAPE], DimModel[model_key] = "mean_7_weekday")
+
+Baseline WAPE =
+CALCULATE([Model WAPE], DimModel[model_key] = "mean_7")
+
+WAPE Improvement pp =
+([Baseline WAPE] - [Adjusted WAPE]) * 100
+
+Evaluation Actual Sales =
+CALCULATE(SUM(FactForecast[sale_amount]), DimModel[model_key] = "mean_7")
+
+Baseline Forecast =
+CALCULATE(SUM(FactForecast[prediction]), DimModel[model_key] = "mean_7")
+
+Adjusted Forecast =
+CALCULATE(SUM(FactForecast[prediction]), DimModel[model_key] = "mean_7_weekday")
