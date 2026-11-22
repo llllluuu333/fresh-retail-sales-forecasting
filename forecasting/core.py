@@ -58,8 +58,11 @@ def evaluate(data, method):
     if data.empty or data[['sale_amount', method]].isna().any().any():
         raise ValueError('Evaluation requires nonempty, complete predictions')
     actual, predicted = data['sale_amount'], data[method]
-    if not np.isfinite(predicted).all():
-        raise ValueError('Predictions must be finite')
+    for label, values in [('Actual sales', actual), ('Predictions', predicted)]:
+        if not pd.api.types.is_numeric_dtype(values):
+            raise ValueError(f'{label} must be numeric')
+        if not np.isfinite(values).all() or (values < 0).any():
+            raise ValueError(f'{label} must be finite and non-negative')
     denom = actual.abs().sum()
     if denom == 0:
         raise ValueError('WAPE denominator is zero')

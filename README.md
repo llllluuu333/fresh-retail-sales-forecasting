@@ -2,6 +2,17 @@
 
 A reproducible supply-chain analytics case study using SQL, Python and the FreshRetailNet-50K dataset. The objective is **next-day observed sales forecasting**, with daily updates, for 20 products in one store.
 
+## Quick start with synthetic data
+
+To try the forecasting pipeline without downloading the original dataset:
+
+~~~bash
+python -m pip install -r requirements.txt
+python -m forecasting.demo
+~~~
+
+The demo invents two product series with a weekday pattern and uses 14 training days followed by seven daily updated one-day forecasts per product. Its metrics describe only this illustrative data; they are not the FreshRetailNet results reported below. The full experiment and Power BI report still require the separately downloaded source data.
+
 ## Full-population extension and Power BI
 
 The original experiment below is a learning sample (one store, 20 products). An additional exploratory run covers all 898 stores and 50,000 store-product series, using 4.85 million source rows. In validation, baseline and weekday-adjusted WAPE are 33.99% and 32.63%; in the seven-day evaluation period they are 34.61% and 32.96%. Each forecast uses only preceding observed days and a weekday factor estimated before validation. These are daily updated one-day forecasts. The evaluation dates were previously inspected in the sample experiment, so this extension is exploratory rather than an untouched final test.
@@ -53,7 +64,7 @@ python -m forecasting.run --input artifacts/02_sample.csv --output artifacts/exp
 python -m unittest discover -s tests -v
 ```
 
-The module separates input validation, fitting, prediction and evaluation. It checks required fields, duplicate keys, missing dates and chronological split order. It writes predictions and metrics as separate artifacts. The tests exercise leakage boundaries, daily continuity and metric edge cases using small synthetic data; GitHub Actions runs them on each push and pull request without downloading the original dataset. The reusable CLI evaluates the internal validation period; the separate `scripts/10_final_test.py` implements the fixed held-out test described above.
+The CLI will not replace existing predictions or metrics unless you explicitly pass --overwrite; use a new output directory for a separate run. The module separates input validation, fitting, prediction and evaluation. It checks required fields, duplicate keys, missing dates and chronological split order. It writes predictions and metrics as separate artifacts. The tests exercise leakage boundaries, daily continuity and metric edge cases using small synthetic data; GitHub Actions runs them on each push and pull request without downloading the original dataset. The reusable CLI evaluates the internal validation period; the separate `scripts/10_final_test.py` implements the fixed held-out test described above.
 
 Repository layout: `scripts/` contains the learning-oriented end-to-end analysis, `forecasting/` the reusable module, `tests/` the automated checks, and `results/` the published aggregate results. This is an offline analytics pipeline rather than a deployed forecasting service.
 

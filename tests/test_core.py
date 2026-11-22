@@ -39,5 +39,26 @@ class ForecastTests(unittest.TestCase):
             evaluate(pd.DataFrame({'sale_amount': [0.], 'pred': [1.]}), 'pred')
 
 
+    def test_metrics_reject_nonfinite_or_negative_actuals_and_predictions(self):
+        invalid_cases = [
+            ('sale_amount', float('inf')), ('sale_amount', float('-inf')),
+            ('sale_amount', -1.0), ('pred', float('inf')),
+            ('pred', float('-inf')), ('pred', -1.0),
+            ('sale_amount', float('nan')), ('pred', float('nan')),
+        ]
+        for column, invalid in invalid_cases:
+            with self.subTest(column=column, invalid=invalid):
+                rows = pd.DataFrame({'sale_amount': [2., 4.], 'pred': [3., 2.]})
+                rows.loc[1, column] = invalid
+                with self.assertRaises(ValueError):
+                    evaluate(rows, 'pred')
+
+    def test_metrics_reject_nonnumeric_input(self):
+        with self.assertRaisesRegex(ValueError, 'must be numeric'):
+            evaluate(pd.DataFrame({'sale_amount': ['2', '4'], 'pred': [3., 2.]}), 'pred')
+        with self.assertRaisesRegex(ValueError, 'must be numeric'):
+            evaluate(pd.DataFrame({'sale_amount': [2., 4.], 'pred': ['3', '2']}), 'pred')
+
+
 if __name__ == '__main__':
     unittest.main()
