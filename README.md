@@ -17,6 +17,8 @@ The demo invents two product series with a weekday pattern and uses 14 training 
 
 The original experiment below is a learning sample (one store, 20 products). An additional exploratory run covers all 898 stores and 50,000 store-product series, using 4.85 million source rows. In validation, baseline and weekday-adjusted WAPE are 33.99% and 32.63%; in the seven-day evaluation period they are 34.61% and 32.96%. Each forecast uses only preceding observed days and a weekday factor estimated before validation. These are daily updated one-day forecasts. The evaluation dates were previously inspected in the sample experiment, so this extension is exploratory rather than an untouched final test.
 
+The original run’s [aggregate metrics](results/full_population_metrics.csv) are included for inspection; they are saved outputs, not a substitute for rerunning the source pipeline. No original-input hashes were recorded for that historical run. After adding date-boundary checks, the sample and full-population scripts were rerun against the locally available files; the saved summary metrics agreed within 2e-14. This comparison does not establish the identity of the historical source files.
+
 The Power BI report displays store-level aggregates for validation and evaluation, while preserving the sum of item-level absolute errors. The source, setup, measures, limitations and Desktop verification are documented in [powerbi/README.md](powerbi/README.md). Reproduction requires downloading the original data; generated data and local Power BI caches are excluded from Git.
 ## Results
 
@@ -53,7 +55,7 @@ Download [train.parquet](https://huggingface.co/datasets/Dingdong-Inc/FreshRetai
 python run_pipeline.py
 ```
 
-Scripts are numbered and can also be run individually, for example `python scripts/07_weekday_analysis.py`. They depend on outputs from earlier scripts; running the full pipeline in order generates files in `artifacts/`. `results/` contains the checked-in aggregate results and chart from the original run. For an existing download elsewhere, set `FRESH_RETAIL_TRAIN` to the path to `train.parquet`; `eval.parquet` must be in the same directory.
+The full pipeline runs all numbered scripts and overwrites generated files under artifacts/. Scripts are numbered and can also be run individually, for example `python scripts/07_weekday_analysis.py`. They depend on outputs from earlier scripts; running the full pipeline in order generates files in `artifacts/`. `results/` contains the checked-in aggregate results and chart from the original run. For an existing download elsewhere, set `FRESH_RETAIL_TRAIN` to the path to `train.parquet`; `eval.parquet` must be in the same directory.
 
 ## Reusable forecasting module
 
@@ -66,7 +68,7 @@ python -m unittest discover -s tests -v
 
 The reusable CLI records an SHA-256 of the exact sample CSV bytes it reads, the window and Python/NumPy/pandas versions in run_metadata.json. This identifies the input to a future run, not the original source data behind historical results or a digital signature. The CLI will not replace existing predictions, metrics or metadata unless you explicitly pass --overwrite; use a new output directory for a separate run. The module separates input validation, fitting, prediction and evaluation. It checks required fields, duplicate keys, missing dates and chronological split order. It writes predictions and metrics as separate artifacts. The tests exercise leakage boundaries, daily continuity and metric edge cases using small synthetic data; GitHub Actions runs them on each push and pull request without downloading the original dataset. The reusable CLI evaluates the internal validation period; the separate `scripts/10_final_test.py` implements the fixed held-out test described above.
 
-Repository layout: `scripts/` contains the learning-oriented end-to-end analysis, `forecasting/` the reusable module, `tests/` the automated checks, and `results/` the published aggregate results. This is an offline analytics pipeline rather than a deployed forecasting service.
+Repository layout: `scripts/` contains the learning-oriented end-to-end analysis, `forecasting/` the reusable module, `tests/` the automated checks, and `results/` the published aggregate results. This is an offline analytics pipeline rather than a deployed forecasting service. The fixed historical scripts validate the specified date split and per-series evaluation coverage before scoring; the full-population weekday factors are fitted only from history.
 
 ## Interpretation and limitations
 

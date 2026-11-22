@@ -2,6 +2,7 @@
 import duckdb
 import pandas as pd
 from common import check_data, output_dir
+from period_checks import validate_sample_history, validate_sample_test
 
 folder = output_dir()
 sample = pd.read_csv(folder / '02_sample.csv', parse_dates=['dt'])
@@ -9,6 +10,7 @@ store = int(sample['store_id'].iloc[0])
 ids = sorted(sample['product_id'].unique().tolist())
 if sample['store_id'].nunique() != 1 or len(ids) != 20:
     raise ValueError('样本应包含一个门店和 20 个商品。')
+validate_sample_history(sample, ids, store)
 test_path = check_data().parent / 'eval.parquet'
 con = duckdb.connect()
 con.register('chosen', pd.DataFrame({'product_id': ids}))
@@ -19,8 +21,7 @@ test['dt'] = pd.to_datetime(test['dt'])
 history = sample[['store_id', 'product_id', 'dt', 'sale_amount']].copy()
 history['period'] = 'train'
 test['period'] = 'test'
-if len(test) != 140 or test.duplicated(['store_id', 'product_id', 'dt']).any():
-    raise ValueError('测试集不满足每个商品 7 条且键唯一。')
+validate_sample_test(test, ids, store)
 combined = pd.concat([history, test], ignore_index=True).sort_values(['product_id', 'dt'])
 if combined.duplicated(['store_id', 'product_id', 'dt']).any():
     raise ValueError('训练和测试数据存在重复键。')

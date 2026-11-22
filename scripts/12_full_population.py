@@ -3,6 +3,7 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 from common import check_data, output_dir
+from period_checks import validate_full_periods
 
 folder = output_dir()
 train_path = check_data()
@@ -17,6 +18,7 @@ db.read_parquet(str(train_path)).create_view('raw_train')
 db.read_parquet(str(eval_path)).create_view('raw_test')
 db.execute('CREATE VIEW history AS SELECT *, CAST(dt AS DATE) AS day FROM raw_train')
 db.execute('CREATE VIEW test_data AS SELECT *, CAST(dt AS DATE) AS day FROM raw_test')
+validate_full_periods(db)
 
 # 校验时间粒度：缺日期时不能将前七行当成前七天。
 db.execute('''CREATE TEMP TABLE daily AS
@@ -34,8 +36,8 @@ counts = db.execute('''SELECT COUNT(DISTINCT (store_id, product_id)), COUNT(DIST
 
 # 系数只用内部训练期；随后按天更新，测试日只使用此前已知销量。
 db.execute('''CREATE TEMP TABLE weekday_factor AS
-    SELECT dayofweek(day) AS weekday, AVG(sale_amount) / (SELECT AVG(sale_amount) FROM daily WHERE day < DATE '2024-06-12') AS factor
-    FROM daily WHERE day < DATE '2024-06-12' GROUP BY 1''')
+    SELECT dayofweek(day) AS weekday, AVG(sale_amount) / (SELECT AVG(sale_amount) FROM history WHERE day < DATE '2024-06-12') AS factor
+    FROM history WHERE day < DATE '2024-06-12' GROUP BY 1''')
 db.execute('''CREATE TEMP TABLE scored AS
     WITH rolling AS (
       SELECT *, AVG(sale_amount) OVER (PARTITION BY store_id, product_id ORDER BY day
