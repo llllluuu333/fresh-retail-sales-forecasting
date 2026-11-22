@@ -53,10 +53,32 @@ class ForecastTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     evaluate(rows, 'pred')
 
+    def test_unsigned_integer_subtraction_does_not_wrap(self):
+        rows = pd.DataFrame({'sale_amount': pd.Series([4], dtype='uint64'),
+                             'pred': pd.Series([2], dtype='uint64')})
+        metrics = evaluate(rows, 'pred')
+        self.assertAlmostEqual(metrics['wape'], 0.5)
+        self.assertAlmostEqual(metrics['bias'], -0.5)
+
+    def test_metrics_reject_overflow(self):
+        rows = pd.DataFrame({'sale_amount': [1e308, 1e308],
+                             'pred': [1e308, 1e308]})
+        with self.assertRaisesRegex(ValueError, 'numerical range'):
+            evaluate(rows, 'pred')
+        rows = pd.DataFrame({'sale_amount': [1.0, 1.0],
+                             'pred': [1e308, 1e308]})
+        with self.assertRaisesRegex(ValueError, 'numerical range'):
+            evaluate(rows, 'pred')
+
+    def test_metrics_reject_boolean_and_complex_values(self):
+        for values in ([True, False], [1+1j, 2+0j]):
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                evaluate(pd.DataFrame({'sale_amount': values, 'pred': [1., 2.]}), 'pred')
+
     def test_metrics_reject_nonnumeric_input(self):
-        with self.assertRaisesRegex(ValueError, 'must be numeric'):
+        with self.assertRaisesRegex(ValueError, 'must be real numeric'):
             evaluate(pd.DataFrame({'sale_amount': ['2', '4'], 'pred': [3., 2.]}), 'pred')
-        with self.assertRaisesRegex(ValueError, 'must be numeric'):
+        with self.assertRaisesRegex(ValueError, 'must be real numeric'):
             evaluate(pd.DataFrame({'sale_amount': [2., 4.], 'pred': ['3', '2']}), 'pred')
 
 

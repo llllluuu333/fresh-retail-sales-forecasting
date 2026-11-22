@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -26,6 +27,10 @@ class ForecastCLITests(unittest.TestCase):
             self.assertEqual(first.returncode, 0, first.stderr)
             metrics = output / "metrics.json"
             self.assertEqual(json.loads(metrics.read_text())["baseline"]["n"], 7)
+            metadata = json.loads((output / "run_metadata.json").read_text())
+            self.assertEqual(metadata["input_sha256"], hashlib.sha256(source.read_bytes()).hexdigest())
+            self.assertEqual(metadata["window"], 7)
+            self.assertTrue(metadata["pandas"])
             before = metrics.read_bytes()
             second = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
             self.assertNotEqual(second.returncode, 0)

@@ -59,13 +59,31 @@ def evaluate(data, method):
         raise ValueError('Evaluation requires nonempty, complete predictions')
     actual, predicted = data['sale_amount'], data[method]
     for label, values in [('Actual sales', actual), ('Predictions', predicted)]:
-        if not pd.api.types.is_numeric_dtype(values):
-            raise ValueError(f'{label} must be numeric')
+        if (not pd.api.types.is_numeric_dtype(values)
+                or pd.api.types.is_bool_dtype(values)
+                or pd.api.types.is_complex_dtype(values)):
+            raise ValueError(f'{label} must be real numeric values')
         if not np.isfinite(values).all() or (values < 0).any():
             raise ValueError(f'{label} must be finite and non-negative')
-    denom = actual.abs().sum()
+    # Convert integer and unsigned columns before subtraction to prevent wraparound.
+    actual = actual.to_numpy(dtype=np.float64)
+    predicted = predicted.to_numpy(dtype=np.float64)
+    with np.errstate(over='ignore', invalid='ignore', divide='ignore'):
+        denom = np.sum(actual)
+        error = predicted - actual
+        absolute_error = np.abs(error)
+        absolute_sum = np.sum(absolute_error)
+        signed_sum = np.sum(error)
+        mae = np.mean(absolute_error)
+    if not np.isfinite(denom):
+        raise ValueError('Actual sales total exceeds supported numerical range')
     if denom == 0:
         raise ValueError('WAPE denominator is zero')
-    error = predicted - actual
-    return {'n': len(data), 'mae': float(error.abs().mean()),
-            'wape': float(error.abs().sum() / denom), 'bias': float(error.sum() / denom)}
+    if not all(np.isfinite(x) for x in (absolute_sum, signed_sum, mae)):
+        raise ValueError('Forecast errors exceed supported numerical range')
+    with np.errstate(over='ignore', invalid='ignore', divide='ignore'):
+        wape, bias = absolute_sum / denom, signed_sum / denom
+    if not np.isfinite(wape) or not np.isfinite(bias):
+        raise ValueError('Forecast metrics exceed supported numerical range')
+    return {'n': len(data), 'mae': float(mae),
+            'wape': float(wape), 'bias': float(bias)}
